@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Box,
   Typography,
 } from "@mui/material";
 import { queryStock } from "../services/stock";
-import { buyStock, sellStock } from "../services/portfolio";
+import { buyStock, sellStock, viewPortfolio } from "../services/portfolio";
 import StyledButton from "../components/StyledButton";
+import StockChart from "../components/StockChart";
 
 const Stocks = () => {
   const [ticker, setTicker] = useState("");
@@ -15,6 +16,21 @@ const Stocks = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [portfolioMessage, setPortfolioMessage] = useState(""); // For success or error messages when buying/selling
+  const [portfolio, setPortfolio] = useState<any[]>([]); // Store the user's portfolio stocks
+  const [stockQuantity, setStockQuantity] = useState<number | null>(null); // To store the quantity of queried stock
+
+  // Fetch portfolio on component mount
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      try {
+        const portfolioData = await viewPortfolio();
+        setPortfolio(portfolioData.portfolio || portfolioData); // Ensure it's the right format
+      } catch (err) {
+        console.error("Failed to fetch portfolio:", err);
+      }
+    };
+    fetchPortfolio();
+  }, []);
 
   const handleQuery = async () => {
     setLoading(true);
@@ -30,8 +46,16 @@ const Stocks = () => {
         : data.current_price;
 
       setStockInfo({ ...data, currentPrice });
+
+      // Find if this stock exists in the portfolio
+      const stockInPortfolio = portfolio.find((stock) => stock.ticker === ticker);
+      if (stockInPortfolio) {
+        setStockQuantity(stockInPortfolio.quantity); // Set stock quantity if found
+      } else {
+        setStockQuantity(0); // If stock is not found in portfolio, show 0
+      }
     } catch (err) {
-      setError("Failed to fetch stock information. Please try again.");
+      setError("Enter valid stock ticker!");
     } finally {
       setLoading(false);
     }
@@ -138,6 +162,13 @@ const Stocks = () => {
             <Typography variant="body1" sx={{ color: "#34be10" }}>
               Current Price: ${stockInfo.currentPrice.toFixed(2)}
             </Typography>
+            {stockQuantity !== null && (
+              <Typography variant="body1" sx={{ color: "#34be10" }}>
+                You own {stockQuantity} shares of {stockInfo.ticker}
+              </Typography>
+            )}
+
+            <StockChart ticker={stockInfo.ticker}/>
           </Box>
         )}
 

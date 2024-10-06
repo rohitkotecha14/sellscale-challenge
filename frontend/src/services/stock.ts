@@ -35,3 +35,22 @@ export const queryStock = async (ticker: string) => {
     handleApiError(error, 'Failed to retrieve stock information. Please try again later.');
   }
 };
+
+
+// New API to get stock chart data
+export const getStockChart = async (ticker: string, period = '1mo', interval = '1d') => {
+  try {
+    const response = await axios.get(`${BASE_URL}/stock/chart/${ticker}`, {
+      params: { period, interval },
+      withCredentials: true,
+    });
+
+    if (response.status !== 200) {
+      throw new Error('Failed to retrieve stock chart data.');
+    }
+
+    return response.data;
+  } catch (error: any) {
+    handleApiError(error, 'Failed to retrieve stock chart data. Please try again later.');
+  }
+};
