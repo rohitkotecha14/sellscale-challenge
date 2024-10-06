@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import UserDetails from './pages/UserDetails';
 import { getWalletBalance } from './services/wallet';
+import InactivityTimer from './components/InactivityTimer';
 
 const App = () => {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -42,6 +43,7 @@ const App = () => {
   return (
     <AuthProvider>
       <Router>
+      <InactivityTimer />
         <Routes>
            {/* Public routes */}
            <Route path="/login" element={<Login refreshWalletBalance={refreshWalletBalance} />} /> {/* Pass refresh function */}

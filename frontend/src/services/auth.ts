@@ -36,3 +36,13 @@ export const getCurrentUser = async () => {
     throw error;  // Throw error to be caught in the AuthContext
   }
 };
+
+export const deleteUser = async () => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/user/delete`, { withCredentials: true });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+};

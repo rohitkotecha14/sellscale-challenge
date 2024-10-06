@@ -66,6 +66,17 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
 
     return db_user
 
+# Inside app/routes/user.py or wherever your user routes are defined
+
+@router.delete("/delete", status_code=204)
+async def delete_user(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    try:
+        crud.delete_user(db=db, user_id=user.id)
+        return {"message": "User account deleted successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
 # Route to get the current wallet balance of the logged-in user
 @router.get("/wallet", response_model=float)
 async def get_wallet_balance(user=Depends(get_current_user)):
