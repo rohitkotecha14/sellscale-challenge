@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from "react";
-import {
-  TextField,
-  Box,
-  Typography,
-} from "@mui/material";
-import { queryStock } from "../services/stock";
+import { Box, Typography } from "@mui/material";
+import { queryStock, searchCompany } from "../services/stock";
 import { buyStock, sellStock, viewPortfolio } from "../services/portfolio";
 import StyledButton from "../components/StyledButton";
+import StockInfoDisplay from "../components/StockInfo";
+import BuySellSection from "../components/BuySell";
+import CompanySearch from "../components/CompanySearch";
 import StockChart from "../components/StockChart";
 
 const Stocks = () => {
   const [ticker, setTicker] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [companyMatches, setCompanyMatches] = useState<any[]>([]);
   const [stockInfo, setStockInfo] = useState<any | null>(null);
   const [quantity, setQuantity] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [portfolioMessage, setPortfolioMessage] = useState(""); // For success or error messages when buying/selling
-  const [portfolio, setPortfolio] = useState<any[]>([]); // Store the user's portfolio stocks
-  const [stockQuantity, setStockQuantity] = useState<number | null>(null); // To store the quantity of queried stock
+  const [portfolioMessage, setPortfolioMessage] = useState(""); 
+  const [portfolio, setPortfolio] = useState<any[]>([]); 
+  const [stockQuantity, setStockQuantity] = useState<number | null>(null); 
+  const [searchLimitReached, setSearchLimitReached] = useState(false);
 
-  // Fetch portfolio on component mount
   useEffect(() => {
     const fetchPortfolio = async () => {
       try {
         const portfolioData = await viewPortfolio();
-        setPortfolio(portfolioData.portfolio || portfolioData); // Ensure it's the right format
+        setPortfolio(portfolioData.portfolio || portfolioData);
       } catch (err) {
         console.error("Failed to fetch portfolio:", err);
       }
@@ -32,13 +33,51 @@ const Stocks = () => {
     fetchPortfolio();
   }, []);
 
-  const handleQuery = async () => {
+  const handleSearch = async () => {
+    if (searchLimitReached) {
+      // Search by ticker if search limit reached
+      handleTickerQuery();
+    } else {
+      // Search by company otherwise
+      handleCompanySearch();
+    }
+  };
+
+  const handleCompanySearch = async () => {
+    setLoading(true);
+    setError("");
+    setCompanyMatches([]);
+  
+    try {
+      const data = await searchCompany(searchTerm);
+      if (data && Array.isArray(data)) {
+        const matches = data.map((match: any) => ({
+          symbol: match['1. symbol'],
+          name: match['2. name'],
+        }));
+        setCompanyMatches(matches);
+      } else {
+        setError("No companies found.");
+      }
+    } catch (err: any) {
+      if (err.message) { // Assuming 429 means rate limit reached
+        setSearchLimitReached(true);  // Switch to stock ticker search mode
+      } else {
+        setError("Failed to search for companies. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleTickerQuery = async () => {
     setLoading(true);
     setError("");
     setStockInfo(null);
 
     try {
-      const data = await queryStock(ticker);
+      const data = await queryStock(searchTerm);  // Use searchTerm as the ticker
       const currentPrice = isNaN(data.current_price)
         ? isNaN(data.previous_close)
           ? 0
@@ -46,13 +85,11 @@ const Stocks = () => {
         : data.current_price;
 
       setStockInfo({ ...data, currentPrice });
-
-      // Find if this stock exists in the portfolio
-      const stockInPortfolio = portfolio.find((stock) => stock.ticker === ticker);
+      const stockInPortfolio = portfolio.find((stock) => stock.ticker === searchTerm);
       if (stockInPortfolio) {
-        setStockQuantity(stockInPortfolio.quantity); // Set stock quantity if found
+        setStockQuantity(stockInPortfolio.quantity);
       } else {
-        setStockQuantity(0); // If stock is not found in portfolio, show 0
+        setStockQuantity(0);
       }
     } catch (err) {
       setError("Enter valid stock ticker!");
@@ -66,10 +103,8 @@ const Stocks = () => {
     setPortfolioMessage("");
 
     try {
-      const data = await buyStock(ticker, quantity);
-      setPortfolioMessage(
-        `Successfully bought ${quantity} shares of ${ticker}`
-      );
+      await buyStock(ticker, quantity);
+      setPortfolioMessage(`Successfully bought ${quantity} shares of ${ticker}`);
     } catch (err) {
       setPortfolioMessage("Failed to buy stock. Please try again.");
     } finally {
@@ -82,7 +117,7 @@ const Stocks = () => {
     setPortfolioMessage("");
 
     try {
-      const data = await sellStock(ticker, quantity);
+      await sellStock(ticker, quantity);
       setPortfolioMessage(`Successfully sold ${quantity} shares of ${ticker}`);
     } catch (err) {
       setPortfolioMessage("Failed to sell stock. Please try again.");
@@ -98,52 +133,42 @@ const Stocks = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        background: "linear-gradient(135deg, #0d2e16 0%, #176032 100%)", // Same gradient as portfolio page
+        padding: 3, // Adjust padding to give more space
+        background: "linear-gradient(135deg, #0d2e16 0%, #176032 100%)",
       }}
     >
       <Box
         sx={{
-          maxWidth: 800,
           width: "100%",
+          maxWidth: 1200,  // Increased max width to 1200px to fit the content better
           padding: 4,
-          background: "rgba(255, 255, 255, 0.1)", // Transparent background
-          borderRadius: 3,
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.37)", // Glass effect shadow
-          backdropFilter: "blur(10px)", // Glass effect blur
-          border: "1px solid rgba(255, 255, 255, 0.2)", // Subtle border
+          background: "rgba(255, 255, 255, 0.1)",
+          borderRadius: 2,
+          boxShadow: "0 6px 20px rgba(0, 0, 0, 0.3)", 
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
         }}
       >
         <Typography
-          variant="h4"
+          variant="h5"
           align="center"
           gutterBottom
-          sx={{ color: "#34be10", fontWeight: "bold" }} // Same color as the portfolio page
+          sx={{ color: "#34be10", fontWeight: "bold" }}
         >
-          Trade Stocks
+          Stock Trading Dashboard
         </Typography>
 
-        {/* Input for querying stock information */}
-        <TextField
-          fullWidth
-          label="Enter Stock Ticker"
-          value={ticker}
-          onChange={(e) => setTicker(e.target.value.toUpperCase())}
-          sx={{
-            marginBottom: 2,
-            backgroundColor: "#0d2d13", // Darker background for inputs
-            borderRadius: 2,
-            "& .MuiInputBase-input": { color: "#34be10" }, // White text
-            "& .MuiInputLabel-root": { color: "#34be10" }, // White label
-          }}
-        />
-        <StyledButton
-          onClick={handleQuery}
-          disabled={loading || !ticker}
+        {/* Search Company Section */}
+        <CompanySearch
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          companyMatches={companyMatches}
+          setTicker={setTicker}
           loading={loading}
-          fullWidth
-        >
-          Get Stock Information
-        </StyledButton>
+          handleSearch={handleSearch}
+          searchLimitReached={searchLimitReached}  // Indicate if company search limit is reached
+        />
+
 
         {error && (
           <Typography variant="body1" color="error" sx={{ marginTop: 2 }}>
@@ -152,71 +177,38 @@ const Stocks = () => {
         )}
 
         {stockInfo && (
-          <Box sx={{ marginTop: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ color: "#34be10" }}>
-              Stock Information for {stockInfo.ticker}
-            </Typography>
-            <Typography variant="body1" sx={{ color: "#34be10" }}>
-              Name: {stockInfo.name}
-            </Typography>
-            <Typography variant="body1" sx={{ color: "#34be10" }}>
-              Current Price: ${stockInfo.currentPrice.toFixed(2)}
-            </Typography>
-            {stockQuantity !== null && (
-              <Typography variant="body1" sx={{ color: "#34be10" }}>
-                You own {stockQuantity} shares of {stockInfo.ticker}
-              </Typography>
-            )}
+          <>
+            {/* Flexbox to make stock info and chart appear side by side */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginTop: 3
+              }}
+            >
+              {/* Stock Information */}
+              <Box sx={{ width: '45%' }}>
+                <StockInfoDisplay stockInfo={stockInfo} stockQuantity={stockQuantity} />
+              </Box>
 
-            <StockChart ticker={stockInfo.ticker}/>
-          </Box>
-        )}
-
-        <TextField
-          fullWidth
-          label="Enter Quantity"
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(Number(e.target.value))}
-          sx={{
-            marginTop: 2,
-            marginBottom: 2,
-            backgroundColor: "#0d2d13", // Darker background for inputs
-            borderRadius: 2,
-            "& .MuiInputBase-input": { color: "#34be10" }, // White text
-            "& .MuiInputLabel-root": { color: "#34be10" }, // White label
-          }}
-        />
-
-        {/* Buy and Sell Buttons Side by Side */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <StyledButton
-            onClick={handleBuy}
-            disabled={loading || !ticker || quantity <= 0}
-            loading={loading}
-            customColor="#38c804"
-            fullWidth={false} // Remove fullWidth to allow them to be side by side
-            sx={{ flexGrow: 1, marginRight: 1 }} // Added margin for spacing
-          >
-            Buy Stock
-          </StyledButton>
-
-          <StyledButton
-            onClick={handleSell}
-            disabled={loading || !ticker || quantity <= 0}
-            loading={loading}
-            customColor="#f44336"
-            fullWidth={false} // Remove fullWidth to allow them to be side by side
-            sx={{ flexGrow: 1, marginLeft: 1 }} // Added margin for spacing
-          >
-            Sell Stock
-          </StyledButton>
-        </Box>
-
-        {portfolioMessage && (
-          <Typography variant="body1" sx={{ marginTop: 2, color: "#38c804" }}>
-            {portfolioMessage}
-          </Typography>
+              {/* Stock Chart */}
+              <Box sx={{ width: '50%' }}>
+                <StockChart ticker={stockInfo.ticker} />
+              </Box>
+            </Box>
+            
+            {/* Buy/Sell Section */}
+            <BuySellSection
+              ticker={ticker}
+              quantity={quantity}
+              setQuantity={setQuantity}
+              handleBuy={handleBuy}
+              handleSell={handleSell}
+              loading={loading}
+              portfolioMessage={portfolioMessage}
+            />
+          </>
         )}
       </Box>
     </Box>

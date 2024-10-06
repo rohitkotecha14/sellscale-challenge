@@ -7,6 +7,8 @@ const handleApiError = (error: any, defaultMessage: string) => {
   if (error.response) {
     if (error.response.status === 400) {
       throw new Error('Invalid request. Please check your input and try again.');
+    } else if (error.response.status === 429) {
+      throw new Error('Rate limit exceeded!');
     } else if (error.response.status === 401) {
       throw new Error('Unauthorized. Please login and try again.');
     } else if (error.response.status === 404) {
@@ -52,5 +54,19 @@ export const getStockChart = async (ticker: string, period = '1mo', interval = '
     return response.data;
   } catch (error: any) {
     handleApiError(error, 'Failed to retrieve stock chart data. Please try again later.');
+  }
+};
+
+export const searchCompany = async (companyName: string) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/stock/search/${companyName}`, { withCredentials: true });
+
+    if (response.status !== 200) {
+      throw new Error('Failed to search for company.');
+    }
+
+    return response.data.matches; // Assuming the backend returns a 'matches' array
+  } catch (error: any) {
+    handleApiError(error, 'Failed to search for company. Please try again later.');
   }
 };

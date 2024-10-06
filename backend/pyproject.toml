@@ -17,6 +17,7 @@ yfinance = "^0.2.44"
 bcrypt = "^4.2.0"
 passlib = "^1.7.4"
 python-dotenv = "^1.0.0"
+requests = "^2.32.3"
 
 
 [tool.poetry.group.dev.dependencies]

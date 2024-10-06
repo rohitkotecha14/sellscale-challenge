@@ -1,5 +1,14 @@
+import os
+import requests
+from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException
 import yfinance as yf
+
+from app.exceptions.portfolioExceptions import RateLimitExceededException
+
+load_dotenv()
+
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 
 router = APIRouter()
 
@@ -50,3 +59,21 @@ async def get_stock_chart(ticker: str, period: str = "1mo", interval: str = "1d"
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching chart data: {str(e)}")
+
+@router.get("/search/{company_name}")
+def search_company(company_name: str):
+    url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={company_name}&apikey={ALPHA_VANTAGE_API_KEY}"
+    response = requests.get(url)
+    data = response.json()
+
+    # Check if the response contains a rate limit message
+    if 'Information' in data and 'API rate limit' in data['Information']:
+        raise RateLimitExceededException(detail=data['Information'])
+
+    # Check if 'bestMatches' exists in the response
+    if 'bestMatches' in data:
+        matches = data['bestMatches']
+        return {"matches": matches}
+
+    # If no matches found, return an error response
+    return {"error": "No company found"}
