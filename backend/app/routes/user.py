@@ -1,0 +1,67 @@
+from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
+from sqlalchemy.orm import Session
+from app.database import crud
+from app.schemas.user import UserCreate, UserLogin
+from app.database.db import get_db
+from passlib.hash import bcrypt
+
+router = APIRouter()
+
+# Route to register a new user
+@router.post("/register", response_model=UserCreate)
+async def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_username(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+
+    # Hash the password before storing
+    hashed_password = bcrypt.hash(user.password)
+    return crud.create_user(
+        db=db,
+        username=user.username,
+        email=user.email,
+        first_name=user.first_name,
+        last_name=user.last_name,
+        password=hashed_password
+    )
+
+# Route to log in and set a cookie
+@router.post("/login")
+async def login_user(response: Response, user: UserLogin, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_username(db, username=user.username)
+
+    if not db_user or not bcrypt.verify(user.password, db_user.password):
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+
+    # Set the HttpOnly cookie with username (you can also add 'Secure' if running on HTTPS)
+    response.set_cookie(
+        key="username",
+        value=db_user.username,
+        max_age=60*5,
+        httponly=True,
+        samesite="Lax"
+    )
+
+    return {"message": "Logged in successfully"}
+
+# Route to log out and clear the cookie
+@router.post("/logout")
+async def logout_user(response: Response):
+    # Delete the cookie
+    response.delete_cookie("username")
+    return {"message": "Logged out"}
+
+# Route to get current logged-in user
+@router.get("/me")
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
+    username = request.cookies.get("username")
+
+    if not username:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    db_user = crud.get_user_by_username(db, username=username)
+
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return db_user

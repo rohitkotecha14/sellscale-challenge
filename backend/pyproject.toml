@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "sellscale-challenge"
+version = "0.1.0"
+description = "A stock trading application"
+authors = ["Rohit Kotecha"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.115.0"
+sqlalchemy = "^2.0.35"
+pydantic = "^2.9.2"
+uvicorn = "^0.31.0"
+alembic = "^1.13.3"
+psycopg2-binary = "^2.9.9"
+yfinance = "^0.2.44"
+bcrypt = "^4.2.0"
+passlib = "^1.7.4"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+black = "^24.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
