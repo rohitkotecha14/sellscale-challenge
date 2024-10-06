@@ -9,6 +9,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://avnadmin:AVNS_m9oyag8y4lA9tCzfy0n@sellscale-challenge-db-sellscale-challenge.d.aivencloud.com:21594/sellscale-db?sslmode=require
+      - ALPHA_VANTAGE_API_KEY=5HG2WQ7ISQIJXUK3
 
   frontend:
     build:
