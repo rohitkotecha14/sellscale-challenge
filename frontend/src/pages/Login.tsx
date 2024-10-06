@@ -3,7 +3,11 @@ import { TextField, Button, Box, Typography, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const Login = () => {
+interface LoginProps {
+  refreshWalletBalance: () => Promise<void>;  // Pass refreshWalletBalance as prop
+}
+
+const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,6 +17,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       await auth.login(username, password);
+      await refreshWalletBalance();
       navigate('/');  // Redirect to main content after login
     } catch (err) {
       setError('Login failed. Please check your credentials.');

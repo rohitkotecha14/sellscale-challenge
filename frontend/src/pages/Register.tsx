@@ -5,7 +5,11 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';  // For back button i
 import { registerUser } from '../services/auth';  // Ensure this path is correct
 import { useAuth } from '../contexts/AuthContext';  // Import the AuthContext for login
 
-const Register = () => {
+interface RegisterProps {
+  refreshWalletBalance: () => Promise<void>;  // Pass refreshWalletBalance as prop
+}
+
+const Register: React.FC<RegisterProps> = ({ refreshWalletBalance }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -15,13 +19,13 @@ const Register = () => {
   const navigate = useNavigate();
   const auth = useAuth();  // Access the login function from the AuthContext
 
+  
   const handleRegister = async () => {
     try {
       await registerUser(username, password, firstName, lastName, email);
-
       // Automatically log the user in after successful registration
       await auth.login(username, password);
-
+      await refreshWalletBalance();
       // Redirect to the portfolio/landing page after login
       navigate('/');
     } catch (err) {

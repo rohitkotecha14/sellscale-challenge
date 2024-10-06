@@ -65,3 +65,18 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
 
     return db_user
+
+# Route to get the current wallet balance of the logged-in user
+@router.get("/wallet", response_model=float)
+async def get_wallet_balance(user=Depends(get_current_user)):
+    return user.wallet_balance
+
+
+# Route to update the wallet balance of the logged-in user
+@router.put("/wallet")
+async def update_wallet_balance(new_balance: float, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    try:
+        updated_user = crud.update_wallet_balance(db, user_id=user.id, new_balance=new_balance)
+        return {"message": "Wallet balance updated", "new_balance": updated_user.wallet_balance}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
