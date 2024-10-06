@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, IconButton } from '@mui/material';
+import { TextField, Button, Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';  // For back button icon
 import { registerUser } from '../services/auth';  // Ensure this path is correct
@@ -16,11 +16,37 @@ const Register: React.FC<RegisterProps> = ({ refreshWalletBalance }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const auth = useAuth();  // Access the login function from the AuthContext
 
+  // Email validation regex
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateFields = () => {
+    if (!firstName || !lastName || !email || !username || !password) {
+      setError('All fields are required.');
+      return false;
+    }
+    if (!emailPattern.test(email)) {
+      setError('Please enter a valid email address.');
+      return false;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return false;
+    }
+    return true;
+  };
   
   const handleRegister = async () => {
+    // Clear any previous error
+    setError('');
+  
+    // Validate the input fields before proceeding
+    if (!validateFields()) return;
+  
+    setLoading(true);  // Set loading to true when request starts
     try {
       await registerUser(username, password, firstName, lastName, email);
       // Automatically log the user in after successful registration
@@ -28,8 +54,15 @@ const Register: React.FC<RegisterProps> = ({ refreshWalletBalance }) => {
       await refreshWalletBalance();
       // Redirect to the portfolio/landing page after login
       navigate('/');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      // Handle backend errors
+      if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);  // Reset loading state
     }
   };
 
@@ -227,6 +260,7 @@ const Register: React.FC<RegisterProps> = ({ refreshWalletBalance }) => {
           variant="contained"
           fullWidth
           onClick={handleRegister}
+          disabled={loading}
           sx={{
             padding: '12px',
             borderRadius: '12px',
@@ -239,7 +273,7 @@ const Register: React.FC<RegisterProps> = ({ refreshWalletBalance }) => {
             color: '#ffffff',  // White text
           }}
         >
-          Register
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Register'}
         </Button>
       </Box>
     </Box>

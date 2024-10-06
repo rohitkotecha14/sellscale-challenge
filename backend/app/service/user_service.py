@@ -17,6 +17,10 @@ def create_user_service(db: Session, username: str, email: str, first_name: str,
     db.refresh(db_user)
     return db_user
 
+
+def get_user_by_email_service(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
 # Get all users
 def get_all_users_service(db: Session):
     return db.query(User).all()

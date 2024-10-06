@@ -26,10 +26,8 @@ const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
       navigate('/');  // Redirect to main content only after successful login
     } catch (err: any) {
       setLoading(false);  // Ensure loading is false if there's an error
-      if (err.response && err.response.data && err.response.data.detail) {
-        // If there is a backend error with a specific message, use that message
-        setError(err.response.data.detail);
-      } else if (err.message) {
+      console.log(err)
+      if (err.message) {
         // Check if the error has a general message
         setError(err.message);
       } else {
