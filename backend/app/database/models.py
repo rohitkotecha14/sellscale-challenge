@@ -15,7 +15,7 @@ class User(Base):
     wallet_balance = Column(Float, default=0.0)  # Add wallet balance with a default value of 0.0
 
     # One-to-many relationship with Portfolio
-    portfolio = relationship("Portfolio", back_populates="owner")
+    portfolio = relationship("Portfolio", back_populates="owner", cascade="all, delete")
 
 # Portfolio model to store stock transactions
 class Portfolio(Base):
