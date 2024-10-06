@@ -11,16 +11,31 @@ const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);  // Loading state to handle premature redirects
   const auth = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    setLoading(true);  // Set loading to true when login starts
+    setError('');  // Clear any previous error
+
     try {
-      await auth.login(username, password);
+      await auth.login(username, password);  // This should throw an error if login fails
       await refreshWalletBalance();
-      navigate('/');  // Redirect to main content after login
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      setLoading(false);  // Set loading to false after login success
+      navigate('/');  // Redirect to main content only after successful login
+    } catch (err: any) {
+      setLoading(false);  // Ensure loading is false if there's an error
+      if (err.response && err.response.data && err.response.data.detail) {
+        // If there is a backend error with a specific message, use that message
+        setError(err.response.data.detail);
+      } else if (err.message) {
+        // Check if the error has a general message
+        setError(err.message);
+      } else {
+        // Fallback for any unexpected errors
+        setError('An unexpected error occurred. Please try again later.');
+      }
     }
   };
 
@@ -119,6 +134,7 @@ const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
           }}
         />
 
+        {/* Display error message */}
         {error && (
           <Typography
             color="error"
@@ -133,12 +149,13 @@ const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
           variant="contained"
           fullWidth
           onClick={handleLogin}
+          disabled={loading}  // Disable button while loading
           sx={{
             padding: '12px',
             borderRadius: '12px',
-            backgroundColor: '#38c804',  // Light green button
+            backgroundColor: loading ? '#a1a1a1' : '#38c804',  // Light green button, grey when loading
             '&:hover': {
-              backgroundColor: '#176032',  // Dark green on hover
+              backgroundColor: loading ? '#a1a1a1' : '#176032',  // Dark green on hover
             },
             marginBottom: 2,
             fontWeight: 'bold',
@@ -146,7 +163,7 @@ const Login: React.FC<LoginProps> = ({ refreshWalletBalance }) => {
             color: '#ffffff',  // White text
           }}
         >
-          Login
+          {loading ? 'Logging in...' : 'Login'}  {/* Show loading text */}
         </Button>
 
         <Typography
