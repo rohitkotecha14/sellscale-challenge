@@ -27,7 +27,7 @@ export const registerUser = async (username: string, password: string, first_nam
   try {
     const response = await axios.post(`${BASE_URL}/user/register`, { username, password, first_name, last_name, email }, { withCredentials: true });
 
-    if (response.status !== 201) {
+    if (response.status !== 200) {
       throw new Error('Registration failed');
     }
 
