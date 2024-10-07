@@ -66,6 +66,8 @@ def search_company(company_name: str):
     response = requests.get(url)
     data = response.json()
 
+    print(data)
+    print(ALPHA_VANTAGE_API_KEY)
     # Check if the response contains a rate limit message
     if 'Information' in data and 'API rate limit' in data['Information']:
         raise RateLimitExceededException(detail=data['Information'])

@@ -21,28 +21,35 @@ const CompanySearch: React.FC<CompanySearchProps> = ({
   handleSearch,
   searchLimitReached,
 }) => {
+  const handleInputChange = (event: React.ChangeEvent<{}>, newInputValue: string) => {
+    setSearchTerm(newInputValue);
+    if (searchLimitReached) {
+      // If the search limit is reached, directly set the typed value as the ticker
+      setTicker(newInputValue.toUpperCase());
+    }
+  };
+
+  const handleSelectChange = (event: React.ChangeEvent<{}>, newValue: string | null) => {
+    // Ensure ticker is set when a company is selected from dropdown
+    if (!searchLimitReached && newValue) {
+      const selectedCompany = companyMatches.find(company => `${company.name} (${company.symbol})` === newValue);
+      if (selectedCompany) {
+        // Ensure ticker is properly set and passed to the parent
+        setTicker(selectedCompany.symbol.toUpperCase());
+        // Optionally call handleSearch directly here if you want to fetch details immediately on selection
+        handleSearch();
+      }
+    }
+  };
+
   return (
     <Autocomplete
       freeSolo
       options={searchLimitReached 
         ? [] // No suggestions when search limit is reached
         : companyMatches.map((company) => `${company.name} (${company.symbol})`)}  // Options displayed in autocomplete dropdown
-      onInputChange={(event, newInputValue) => {
-        setSearchTerm(newInputValue);
-        if (searchLimitReached) {
-          // If the search limit is reached, directly set the typed value as the ticker
-          setTicker(newInputValue.toUpperCase());
-        }
-      }}
-      onChange={(event, newValue) => {
-        // If search limit is not reached, handle company selection
-        if (!searchLimitReached && newValue) {
-          const selectedCompany = companyMatches.find(company => `${company.name} (${company.symbol})` === newValue);
-          if (selectedCompany) {
-            setTicker(selectedCompany.symbol);  // Sets the ticker symbol when an option is selected
-          }
-        }
-      }}
+      onInputChange={handleInputChange}
+      onChange={handleSelectChange}
       renderInput={(params) => (
         <TextField
           {...params}
