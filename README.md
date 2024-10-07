@@ -26,7 +26,7 @@ To run both the backend and frontend services using Docker, follow these steps:
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/rohitkotecha14/sellscale-challenge/tree/main
+    git clone https://github.com/rohitkotecha14/sellscale-challenge
     cd sellscale-challenge
     ```
 
