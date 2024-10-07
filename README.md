@@ -13,32 +13,34 @@ Both services can be run using **Docker** with the provided `docker-compose.yml`
 ### Docker
 - Ensure that you have **Docker** and **Docker Compose** installed. If you don't, you can download it from [here](https://www.docker.com/get-started).
 
-### Python 3.12 preferred (If not using Docker)
+### Python 3.12 (If not using Docker)
 - You need **Python 3.12** installed on your system to run the backend. You can download it from [here](https://www.python.org/downloads/release/python-3120/).
 
 ### Node.js (If not using Docker)
 - The frontend requires **Node.js version 16** and **npm**. You can download it from [here](https://nodejs.org/en/download).
 
+## Cloning the Repository
+
+To run the project, you first need to clone the repository. This step is required whether using Docker or running the services manually:
+
+```bash
+git clone https://github.com/rohitkotecha14/sellscale-challenge
+cd sellscale-challenge
+```
+
 ## Running the Application with Docker
 
 To run both the backend and frontend services using Docker, follow these steps:
 
-1. Clone the repository:
+1. Ensure Docker is running on your system.
 
-    ```bash
-    git clone https://github.com/rohitkotecha14/sellscale-challenge
-    cd sellscale-challenge
-    ```
-
-2. Ensure Docker is running on your system.
-
-3. Run the services:
+2. Run the services:
 
     ```bash
     docker-compose up --build
     ```
 
-4. Both the backend and frontend will now be running:
+3. Both the backend and frontend will now be running:
 
    - **Backend (FastAPI)** will be available at: `http://localhost:8000`
    - **Frontend (React)** will be available at: `http://localhost:3000`
@@ -57,10 +59,20 @@ If Docker is not an option and you wish to run the backend manually:
 
 3. Create and activate a virtual environment:
 
+   - **Linux/macOS**:
+
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows use: venv\Scripts\activate
+    source venv/bin/activate
     ```
+
+   - **Windows**:
+
+    ```bash
+    python -m venv venv
+    venv\Scripts\activate
+    ```
+
 
 4. Install the required dependencies:
 
